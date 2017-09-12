@@ -22,7 +22,7 @@
 ---
 
 ## 四．系统功能框架图：
-![流程图](http://chuantu.biz/t6/46/1505204541x607756861.png)
+![流程图](<center>http://chuantu.biz/t6/46/1505204541x607756861.png</center>)
 
 ---
 
