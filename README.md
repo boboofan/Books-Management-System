@@ -34,8 +34,8 @@
 * 2个由基类派生出的派生类：*class Reader* 和*class Administrator*。
 
 *class Book* 包含了2个功能函数：
-`void FindBook()`：查找书籍
-`void PrintBook(streampos pos)`：输出书籍信息
+* `void FindBook()`：查找书籍
+* `void PrintBook(streampos pos)`：输出书籍信息
 
 *class User* 包含了4个功能函数：
 `void Register(const string sign)`：注册账号
