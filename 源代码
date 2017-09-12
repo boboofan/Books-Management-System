@@ -1,0 +1,841 @@
+#include<iostream>
+#include<iomanip>
+#include<string>
+#include<fstream>
+#include<math.h>
+#define OK 1
+#define ERROR -1
+#define MaxUserLength 15
+#define MaxBookLength 20
+#define MaxNumberLength 10
+using namespace std;
+
+
+//——————————基础调用函数——————————
+
+int IsLegal(string s)		//检查输入是否合法
+{
+	int i;
+	if (s.size()>MaxUserLength)
+		return ERROR;
+	else
+	{
+		for (i = 0; i < MaxUserLength && s[i] != '\0'; i++)
+		{
+			if ((s[i] == '_') || ('0' <= s[i] && s[i] <= '9') || ('A' <= s[i] && s[i] <= 'Z') || ('a' <= s[i] && s[i] <= 'z'));		//检查是否是合法字符
+			else
+				return ERROR;
+		}
+	}
+	return OK;
+}
+
+streampos CheckAccount(string s, const string sign)		//检查登陆账号是否存在
+{
+	char c, d;
+	string acc;
+	ifstream infile(sign, ios::in | ios::binary);
+	c = infile.get();
+	while (c != EOF)
+	{
+		if (c == '#')
+		{
+			acc.clear();
+			infile >> d;
+			while (d != '.')
+			{
+				if (d != ' ')
+					acc += d;
+				infile >> d;
+			}
+			if (acc == s)
+			{
+				return infile.tellg();
+				infile.close();
+			}
+		}
+		c = infile.get();
+	}
+	infile.close();
+	return ERROR;
+}
+
+int CheckPassword(string s, const string sign, streampos pos)		//检查密码与账号是否匹配
+{
+	char c;
+	string pas;
+	ifstream infile(sign, ios::in | ios::binary);
+	infile.seekg(pos);
+	infile >> c;
+	while (c != '*')
+	{
+		if (c != ' ')
+			pas += c;
+		infile >> c;
+	}
+	if (pas == s)
+		return OK;
+	else
+		return ERROR;
+}
+
+streampos GetBook(long n)		//根据序号查找书籍在文件中的位置
+{
+	ifstream infile("books.bin", ios::in | ios::binary);
+	char c;
+	long d;
+	c = infile.get();
+	while (c != EOF)
+	{
+		if (c == '#')
+		{
+			streampos pos = infile.tellg();
+			infile >> d;
+			if (fabs(d) == n)
+			{
+				if (d > 0)
+				{
+					infile.close();
+					return pos;
+				}
+				else
+				{
+					infile.close();
+					return ERROR;
+				}
+			}
+		}
+		c = infile.get();
+	}
+	return ERROR;
+}
+
+streampos GetBook(int n, string s)			//根据ISBN，书名，作者查找书籍在文件中的位置
+{
+	streampos pos;
+	ifstream infile("books.bin", ios::in | ios::binary);
+	char c, start, end;
+	string t;
+	if (n == 2)
+		start = '@', end = '&';
+	else if (n == 3)
+		start = '&', end = '+';
+	else if (n == 4)
+		start = '+', end = '-';
+	c = infile.get();
+	while (c != EOF)
+	{
+		if (c == '#')
+			pos = infile.tellg();
+		if (c == start)
+		{
+			t.clear();
+			c = infile.get();
+			while (c != end)
+			{
+				if (c != ' ')
+					t += c;
+				c = infile.get();
+			}
+			if (t == s)
+				return pos;
+		}
+		c = infile.get();
+	}
+	return ERROR;
+}
+
+long ChangeBookNumber(long n)		//查看书籍数量和修改书籍数量
+{
+	if (n == ERROR)
+	{
+		ifstream infile("books.bin", ios::in | ios::binary);
+		infile >> n;
+		infile.close();
+		return n;
+	}
+	else
+	{
+		ofstream outfile("books.bin", ios::out | ios::in | ios::binary);
+		outfile << setw(MaxNumberLength) << n;
+		outfile.close();
+		return ERROR;
+	}
+}
+
+
+//————————————对象————————————
+
+class Book {
+public:
+	Book() { SerialNumber = 0, RemainingNumber = -1, ISBN.clear(), Name.clear(), Author.clear(); }
+	void FindBook();
+	void PrintBook(streampos pos);
+protected:
+	long SerialNumber, RemainingNumber;
+	string ISBN, Name, Author;
+};
+void Book::FindBook()		//根据关键字查找书籍
+{
+	int s = ERROR;
+	do {
+		streampos pos;
+		cout << "请选择要搜索的关键字：1.序号 2.ISBN 3.书名 4.作者 5.退出搜索" << endl;
+		s = (int)cin.get() - 48;
+		while (s == -38)
+			s = (int)cin.get() - 48;
+		cin.ignore(1024, '\n');
+		if (s == 1)
+		{
+			cout << "请输入书籍序号：" << endl;
+			cin.clear();
+			cin >> SerialNumber;
+			streampos pos = GetBook(SerialNumber);
+			PrintBook(pos);
+			Book::PrintBook(pos);
+		}
+		else if (s == 2)
+		{
+			cout << "请输入ISBN：" << endl;
+			cin.clear();
+			getline(cin, ISBN, '\n');
+			pos = GetBook(s, ISBN);
+			Book::PrintBook(pos);
+		}
+		else if (s == 3)
+		{
+			cout << "请输入书名：" << endl;
+			cin.clear();
+			getline(cin, Name, '\n');
+			pos = GetBook(s, Name);
+			Book::PrintBook(pos);
+		}
+		else if (s == 4)
+		{
+			cout << "请输入作者：" << endl;
+			cin.clear();
+			getline(cin, Author, '\n');
+			pos = GetBook(s, Author);
+			Book::PrintBook(pos);
+		}
+		else if (s == 5);
+		else
+			cout << "您输入的选项不合法，请重新输入" << endl << endl;
+	} while (s != 5);
+}
+void Book::PrintBook(streampos pos)		//输出书籍信息
+{
+	if ((int)pos == ERROR)
+		cout << "未找到该书籍" << endl << endl;
+	else
+	{
+		char c;
+		ifstream infile("books.bin", ios::in | ios::binary);
+		infile.seekg(pos);
+		ISBN.clear(), Name.clear(), Author.clear();
+		infile >> SerialNumber;
+		//读入序号
+		c = infile.get();
+		c = infile.get();
+		while (c != '&')
+		{
+			if (c != ' ')
+				ISBN += c;
+			c = infile.get();
+		}
+		//读入ISBN
+		c = infile.get();
+		while (c != '+')
+		{
+			if (c != ' ')
+				Name += c;
+			c = infile.get();
+		}
+		//读入书名
+		c = infile.get();
+		while (c != '-')
+		{
+			if (c != ' ')
+				Author += c;
+			c = infile.get();
+		}
+		//读入作者
+		infile >> RemainingNumber;
+		//读入剩余数量
+		infile.close();
+		cout << "找到该书籍：" << endl;
+		cout << "序号：" << SerialNumber << " 书名：" << Name << " 作者：" << Author << " ISBN：" << ISBN << " 剩余数：" << RemainingNumber << "本" << endl << endl;
+	}
+}
+
+class User {
+public:
+	void Register(const string sign);
+	int Login(const string sign);
+	void ChangePassword(const string sign);
+	void LogOff(const string sign);
+protected:
+	string account, password;
+};
+void User::Register(const string sign)
+{
+	if (sign == "readers.bin")
+		cout << endl << "——————欢迎注册读者账号——————" << endl << endl;
+	else if (sign == "administrators.bin")
+		cout << endl << "——————欢迎注册管理员账号——————" << endl << endl;
+	int s = OK;
+	while (s == OK)
+	{
+		cout << "请输入要注册的账号名（仅支持字母，数字和下划线，不超过" << MaxUserLength << "个字符）：" << endl;
+		cin.clear();
+		getline(cin, account, '\n');
+		if (IsLegal(account) == OK&&CheckAccount(account, sign) == (streampos)ERROR)		//账号可用
+		{
+			cout << "请输入您的密码（仅支持字母，数字和下划线，不超过" << MaxUserLength << "个字符）：" << endl;
+			cin.clear();
+			getline(cin, password, '\n');
+			if (IsLegal(password) == OK)		//密码可用
+			{
+				ofstream outfile;
+				outfile.open(sign, ios::app | ios::binary);
+				outfile << "#" << setw(MaxUserLength) << account << '.' << setw(MaxUserLength) << password << '*';
+				outfile.close();
+				cout << "注册成功！" << endl << endl;
+				cout << "您的账号是：" << endl << account << endl;
+				cout << "您的密码是：" << endl << password << endl << endl;
+				if (sign == "readers.bin")
+				{
+					long n = 0;
+					string a = account;
+					a = '#' + a + ".bin";
+					ofstream outfile(a, ios::out | ios::binary);
+					outfile << setw(MaxNumberLength) << n;
+					outfile.close();
+				}
+				s = ERROR;
+			}
+			else		//密码不可用
+			{
+				s = ERROR;
+				cout << "您输入的密码不可用" << endl << endl;
+				do {
+					cout << "请选择：1.重新输入 2.退出注册" << endl << endl;
+					s = (int)cin.get() - 48;
+					while (s == -38)
+						s = (int)cin.get() - 48;
+					cin.ignore(1024, '\n');
+					if (s != 1 && s != 2)
+						cout << "您输入的选项不合法，请重新输入" << endl << endl;
+				} while (s != 1 && s != 2);
+			}
+		}
+		else		//账号不可用
+		{
+			s = ERROR;
+			cout << "您输入的账号不可用" << endl << endl;
+			do {
+				cout << "请选择：1.重新输入 2.退出注册" << endl;
+				s = (int)cin.get() - 48;
+				while (s == -38)
+					s = (int)cin.get() - 48;
+				cin.ignore(1024, '\n');
+				if (s != 1 && s != 2)
+					cout << "您输入的选项不合法，请重新输入" << endl << endl;
+			} while (s != 1 && s != 2);
+		}
+	}
+}
+int User::Login(const string sign)
+{
+	if (sign == "readers.bin")
+		cout << endl << "——————欢迎登陆读者账号——————" << endl << endl;
+	else if (sign == "administrators.bin")
+		cout << endl << "——————欢迎登陆管理员账号——————" << endl << endl;
+	int s = OK;
+	while (s == OK)
+	{
+		cout << "请输入要登陆的账号名（仅支持字母，数字和下划线，不超过" << MaxUserLength << "个字符）：" << endl;
+		cin.clear();
+		getline(cin, account, '\n');
+		streampos pos;
+		pos = CheckAccount(account, sign);
+		if (IsLegal(account) == OK&&pos != (streampos)ERROR)		//账号正确
+		{
+			cout << "请输入您的密码（仅支持字母，数字和下划线，不超过" << MaxUserLength << "个字符）：" << endl;
+			cin.clear();
+			getline(cin, password, '\n');
+			if (CheckPassword(password, sign, pos) == OK)		//密码正确
+			{
+				cout << "登陆成功！" << endl << endl;
+				return OK;
+			}
+			else		//密码不正确
+			{
+				s = ERROR;
+				cout << "您输入的密码不正确" << endl << endl;
+				do {
+					cout << "请选择：1.重新输入 2.退出登陆" << endl << endl;
+					s = (int)cin.get() - 48;
+					while (s == -38)
+						s = (int)cin.get() - 48;
+					cin.ignore(1024, '\n');
+					if (s != 1 && s != 2)
+						cout << "您输入的选项不合法，请重新输入" << endl << endl;
+					else if (s == 2)
+						return ERROR;
+				} while (s != 1 && s != 2);
+			}
+		}
+		else		//账号不正确
+		{
+			s = ERROR;
+			cout << "您输入的账号不正确" << endl << endl;
+			do {
+				cout << "请选择：1.重新输入 2.退出登陆" << endl;
+				s = (int)cin.get() - 48;
+				while (s == -38)
+					s = (int)cin.get() - 48;
+				cin.ignore(1024, '\n');
+				if (s != 1 && s != 2)
+					cout << "您输入的选项不合法，请重新输入" << endl << endl;
+			} while (s != 1 && s != 2);
+		}
+	}
+	return ERROR;
+}
+void User::ChangePassword(const string sign)
+{
+	cout << "请输入您的新密码（仅支持字母，数字和下划线，不超过" << MaxUserLength << "个字符）：" << endl;
+	cin.clear();
+	getline(cin, password, '\n');
+	int s = OK;
+	while (s == OK)
+	{
+		if (IsLegal(password) == OK)
+		{
+			streampos pos;
+			pos = CheckAccount(account, sign);
+			ofstream outfile(sign, ios::out | ios::in | ios::binary);
+			outfile.seekp(pos);
+			outfile << setw(MaxUserLength) << password;
+			outfile.close();
+			cout << "修改密码成功！" << endl << endl;
+			s = ERROR;
+		}
+		else
+		{
+			s = ERROR;
+			cout << "您输入的密码不可用" << endl << endl;
+			do {
+				cout << "请选择：1.重新输入 2.退出修改" << endl << endl;
+				s = (int)cin.get() - 48;
+				while (s == -38)
+					s = (int)cin.get() - 48;
+				cin.ignore(1024, '\n');
+				if (s != 1 && s != 2)
+					cout << "您输入的选项不合法，请重新输入" << endl << endl;
+			} while (s != 1 && s != 2);
+		}
+	}
+}
+void User::LogOff(const string sign)
+{
+	int count = 0;
+	if (sign == "administrators.bin")
+	{
+		ifstream infile(sign, ios::in | ios::binary);
+		char c;
+		c = infile.get();
+		while (c != EOF)
+		{
+			if (c == '#')
+				count++;
+			c = infile.get();
+		}
+		infile.close();
+	}
+	if (count == 1)
+		cout << "系统必须保有一个管理员，注销失败" << endl << endl;
+	else
+	{
+		streampos pos = CheckAccount(account, sign);
+		ofstream outfile(sign, ios::out | ios::in | ios::binary);
+		outfile.seekp(pos);
+		outfile.seekp(-(MaxUserLength + 2), ios::cur);
+		outfile << '*';
+		outfile.close();
+		cout << "账户注销成功！" << endl << endl;
+	}
+}
+
+class Reader :public Book, public User {
+public:
+	void ShowProfile();
+	void BorrowBook();
+	void ReturnBook();
+	const string sign = "readers.bin";
+};
+void Reader::ShowProfile()			//显示读者借阅书籍信息
+{
+	long n;
+	char c;
+	string acc = '#' + account + ".bin";
+	ifstream infile(acc, ios::in | ios::binary);
+	infile >> n;
+	if (n == 0)
+		cout << "用户" << account << "没有借阅任何书籍" << endl << endl;
+	else
+	{
+		cout << "用户" << account << "借阅了" << n << "本书籍，书籍序号是：" << endl;
+		c = infile.get();
+		while (c != EOF)
+		{
+			infile >> n;
+			if (n>0)
+				cout << n << " ";
+			c = infile.get();
+		}
+		cout << endl << endl;
+	}
+	infile.close();
+}
+void Reader::BorrowBook()		//借书
+{
+	cout << "请输入需要借阅的书籍序号：" << endl;
+	cin.clear();
+	cin >> SerialNumber;
+	streampos pos = GetBook(SerialNumber);
+	if (pos == (streampos)ERROR)
+		cout << "该书籍不存在，无法借阅" << endl << endl;
+	else
+	{
+		ifstream infile("books.bin", ios::in | ios::binary);
+		infile.seekg(pos);
+		infile >> SerialNumber;
+		char c;
+		infile >> c;
+		while (c != '-')
+			infile >> c;
+		pos = infile.tellg();
+		infile >> RemainingNumber;
+		infile.close();
+		if (RemainingNumber == 0)
+			cout << "该书籍已经全部借出，无法借阅" << endl << endl;
+		else
+		{
+			ofstream outbookfile("books.bin", ios::out | ios::in | ios::binary);
+			outbookfile.seekp(pos);
+			outbookfile << setw(MaxNumberLength) << --RemainingNumber;
+			outbookfile.close();
+			string acc = '#' + account + ".bin";
+			ifstream infile(acc, ios::in | ios::binary);
+			long count;
+			infile >> count;
+			infile.close();
+			ofstream ofile(acc, ios::out | ios::in | ios::binary);
+			ofile << setw(MaxNumberLength) << ++count;
+			ofile.close();
+			ofstream outfile(acc, ios::app | ios::in | ios::binary);
+			outfile << '#' << setw(MaxNumberLength) << SerialNumber;
+			outfile.close();
+			cout << "借阅" << SerialNumber << "号书籍成功" << endl << endl;
+		}
+	}
+}
+void Reader::ReturnBook()			//还书
+{
+	cout << "请输入需要归还的书籍序号：" << endl;
+	streampos pos;
+	cin.clear();
+	cin >> SerialNumber;
+	string acc = '#' + account + ".bin";
+	ifstream infile(acc, ios::in | ios::binary);
+	long count, s;
+	infile >> count;
+	char c;
+	c = infile.get();
+	infile >> s;
+	while (SerialNumber != s && c != EOF)
+	{
+		c = infile.get();
+		pos = infile.tellg();
+		infile >> s;
+	}
+	infile.close();
+	if (SerialNumber != s)
+		cout << "没有借阅过该书籍，无需归还" << endl << endl;
+	else
+	{
+		streampos bookpos = GetBook(SerialNumber);
+		if (bookpos == (streampos)ERROR)
+			cout << "该书籍不存在，无法归还" << endl << endl;
+		else
+		{
+			ifstream inbookfile("books.bin", ios::in | ios::binary);
+			inbookfile.seekg(bookpos);
+			inbookfile >> SerialNumber;
+			c = inbookfile.get();
+			while (c != '-')
+				c = inbookfile.get();
+			bookpos = inbookfile.tellg();
+			inbookfile >> RemainingNumber;
+			inbookfile.close();
+			ofstream outbookfile("books.bin", ios::out | ios::in | ios::binary);
+			outbookfile.seekp(bookpos);
+			outbookfile << setw(MaxNumberLength) << ++RemainingNumber;
+			outbookfile.close();
+			ofstream outfile(acc, ios::out | ios::in | ios::binary);
+			outfile << setw(MaxNumberLength) << --count;
+			outfile.seekp(pos);
+			outfile << setw(MaxNumberLength) << -SerialNumber;
+			outfile.close();
+			cout << "归还" << SerialNumber << "号书籍成功" << endl << endl;
+		}
+	}
+}
+
+class Administrator :public Book, public User {
+public:
+	void AddBook();
+	void DeleteBook();
+	const string sign = "administrators.bin";
+};
+void Administrator::AddBook()			//添加新书籍
+{
+	cout << "请输入新增的书籍信息（以回车作为分隔符）：" << endl;
+	SerialNumber = ChangeBookNumber(ERROR);
+	cout << "请输入书籍的ISBN：" << endl;
+	cin.clear();
+	getline(cin, ISBN, '\n');
+	cout << "请输入书名：" << endl;
+	cin.clear();
+	getline(cin, Name, '\n');
+	cout << "请输入书籍的作者：" << endl;
+	cin.clear();
+	getline(cin, Author, '\n');
+	cout << "请输入新增书籍的数量：" << endl;
+	cin.clear();
+	cin >> RemainingNumber;
+	ofstream outfile("books.bin", ios::app | ios::in | ios::binary);
+	outfile << '#' << setw(MaxNumberLength) << ++SerialNumber << '@' << setw(MaxBookLength) << ISBN << '&' << setw(MaxBookLength) << Name << '+' << setw(MaxBookLength) << Author << '-' << setw(MaxNumberLength) << RemainingNumber;
+	outfile.close();
+	ChangeBookNumber(SerialNumber);
+	cout << "已添加" << SerialNumber << "号书籍：《" << Name << "》" << endl << endl;
+}
+void Administrator::DeleteBook()			//删除书籍
+{
+	cout << "请输入需要删除的书籍序号：" << endl;
+	cin.clear();
+	cin >> SerialNumber;
+	streampos pos = GetBook(SerialNumber);
+	ofstream outfile("books.bin", ios::out | ios::in | ios::binary);
+	outfile.seekp(pos);
+	SerialNumber = -SerialNumber;
+	outfile << setw(MaxNumberLength) << SerialNumber;
+	outfile.close();
+	long n = ChangeBookNumber(ERROR);
+	ChangeBookNumber(--n);
+	cout << "删除书籍成功！" << endl << endl;
+}
+
+
+//——————————对象操作函数——————————
+
+void ReaderFunction(int n)
+{
+	Reader r;
+	int s = OK;
+	if (n == 1)
+		r.Register(r.sign);
+	else if (n == 2)
+	{
+		if (r.Login(r.sign) == OK)
+		{
+			while (s == OK)
+			{
+				cout << "请选择需要的操作：" << endl;
+				cout << "1.修改密码" << endl << "2.注销账号" << endl << "3.显示借阅信息" << endl;
+				cout << "4.查找书籍" << endl << "5.借阅书籍" << endl << "6.归还书籍" << endl << "7.退出账号" << endl << endl;
+				s = (int)cin.get() - 48;
+				while (s == -38)
+					s = (int)cin.get() - 48;
+				cin.ignore(1024, '\n');
+				if (s == 1)
+				{
+					r.ChangePassword(r.sign);
+					s = OK;
+				}
+				else if (s == 2)
+				{
+					r.LogOff(r.sign);
+				}
+				else if (s == 3)
+				{
+					r.ShowProfile();
+					s = OK;
+				}
+				else if (s == 4)
+				{
+					r.FindBook();
+					s = OK;
+				}
+				else if (s == 5)
+				{
+					r.BorrowBook();
+					s = OK;
+				}
+				else if (s == 6)
+				{
+					r.ReturnBook();
+					s = OK;
+				}
+				else if (s == 7);
+				else
+				{
+					cout << "输入的选项不可用，请重新输入" << endl << endl;
+					s = OK;
+				}
+			}
+		}
+	}
+}
+
+void AdministratorFunction()
+{
+	Administrator a;
+	int s = OK;
+	if (a.Login(a.sign) == OK)
+	{
+		while (s == OK)
+		{
+			cout << "请选择需要的操作：" << endl;
+			cout << "1.修改密码" << endl << "2.注销账号" << endl << "3.注册新管理员" << endl;
+			cout << "4.新增书籍" << endl << "5.删除书籍" << endl << "6.退出账号" << endl << endl;
+			s = (int)cin.get() - 48;
+			while (s == -38)
+				s = (int)cin.get() - 48;
+			cin.ignore(1024, '\n');
+			if (s == 1)
+			{
+				a.ChangePassword(a.sign);
+				s = OK;
+			}
+			else if (s == 2)
+			{
+				a.LogOff(a.sign);
+			}
+			else if (s == 3)
+			{
+				a.Register(a.sign);
+				s = OK;
+			}
+			else if (s == 4)
+			{
+				a.AddBook();
+				s = OK;
+			}
+			else if (s == 5)
+			{
+				s = OK;
+				while (s == OK)
+				{
+					cout << "是否要查找书籍：" << endl << "1.是" << " 2.否" << endl << endl;
+					s = (int)cin.get() - 48;
+					while (s == -38)
+						s = (int)cin.get() - 48;
+					cin.ignore(1024, '\n');
+					if (s == 1)
+					{
+						a.FindBook();
+						a.DeleteBook();
+					}
+					else if (s == 2)
+						a.DeleteBook();
+					else
+					{
+						cout << "输入的选项不可用，请重新输入" << endl << endl;
+						s = OK;
+					}
+				}
+				s = OK;
+			}
+			else if (s == 6);
+			else
+			{
+				cout << "输入的选项不可用，请重新输入" << endl << endl;
+				s = OK;
+			}
+		}
+	}
+}
+
+
+//——————————初始界面函数——————————
+
+int RegisterOrLogin()			//选择注册或登陆
+{
+	int s = ERROR;
+	while (s == ERROR)
+	{
+		cout << endl << "请选择注册（仅支持读者注册）/登陆：" << endl;
+		cout << "1.注册" << endl << "2.登陆读者账号" << endl << "3.登陆管理员账号" << endl << "4.退出系统" << endl;
+		s = (int)cin.get() - 48;
+		while (s == -38)
+			s = (int)cin.get() - 48;
+		cin.ignore(1024, '\n');
+		if (s == 1 || s == 2 || s == 3)
+			return s;
+		else if (s == 4)
+			return ERROR;
+		else
+		{
+			cout << "您输入的选项不合法，请重新输入" << endl << endl;
+			s = ERROR;
+		}
+	}
+	cout << endl;
+}
+
+void Initializate()		//初始化文件
+{
+	ofstream books("books.bin", ios::_Noreplace | ios::binary);
+	if (books)
+	{
+		int n = 0;
+		books << setw(MaxNumberLength) << n;
+		books.close();
+	}
+	//初始化书籍文件
+	ofstream readers("readers.bin", ios::_Noreplace | ios::binary);
+	if (readers)
+		readers.close();
+	//初始化用户账户文件
+	ofstream administrator("administrators.bin", ios::_Noreplace | ios::binary);
+	if (administrator)
+	{
+		string acc = "administrator", pas = "123456789";
+		administrator << '#' << setw(MaxUserLength) << acc << '.' << setw(MaxUserLength) << pas << '*';
+		cout << "初始管理员账号为：administrator" << endl << "初始管理员密码为：123456789" << endl << "建议登陆后修改密码" << endl << endl;
+		administrator.close();
+	}
+	//初始化管理员文件
+}
+
+int main()
+{
+	cout << "——————————————欢迎使用图书管理系统——————————————" << endl << endl;
+	Initializate();
+	int s;
+	do
+	{
+		s = RegisterOrLogin();
+		if (s == 1)
+			ReaderFunction(1);		//注册读者账号
+		else if (s == 2)
+			ReaderFunction(2);		//登陆读者账号
+		else if (s == 3)
+			AdministratorFunction();		//登陆管理员账号
+	} while (s != ERROR);
+	cout << endl << "——————————————欢迎再次使用本系统——————————————" << endl;
+	return 0;
+}
