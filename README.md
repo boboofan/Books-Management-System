@@ -16,20 +16,20 @@
 
 ---
 
-##三．程序运行平台：
+## 三．程序运行平台：
 >Visual Studio 2017
 
 ---
 
-##四．系统功能框架图：
+## 四．系统功能框架图：
 ![流程图](http://chuantu.biz/t6/46/1505204541x607756861.png)
 
 ---
 
-##五．程序类说明：
+## 五．程序类说明：
 本程序采用了面向对象的程序设计，系统面向2个对象：读者和管理员。
 本程序以读者和管理2个对象为基本框架，设计了4个模块：
-###1.对象。包含了4个对象：
+### 1.对象。包含了4个对象：
 * 2个基类：*class Book* 和*class User*。
 * 2个由基类派生出的派生类：*class Reader* 和*class Administrator*。
 
@@ -52,16 +52,16 @@
 `void AddBook()`：新增书籍
 `void DeleteBook()`：删除书籍
 
-###2. 初始函数：
+### 2. 初始函数：
 `int main()`：主函数
 `void Initializate()`：初始化系统文件
 `int RegisterOrLogin()`：显示初始界面
 
-###3.对象功能函数：
+### 3.对象功能函数：
 `void ReaderFunction(int n)`：显示读者界面
 `void AdministratorFunction()`：显示管理员界面
 
-###4.接口函数：
+### 4.接口函数：
 `int IsLegal(string s)`；
 `streampos CheckAccount(string s, const string sign)`；
 `int CheckPassword(string s, const string sign, streampos pos)`；
@@ -72,8 +72,8 @@
 
 ---
 
-##六．程序说明文档：
-###文件存储格式（粗体表示变量）：
+## 六．程序说明文档：
+### 文件存储格式（粗体表示变量）：
 
 1. 用户和管理员账号（readers.bin 和 administrations.bin）：
 * 可用：#**account**.**password***
