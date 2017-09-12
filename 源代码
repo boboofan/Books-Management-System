@@ -11,7 +11,7 @@
 using namespace std;
 
 
-//——————————基础调用函数——————————
+//——————————接口函数——————————
 
 int IsLegal(string s)		//检查输入是否合法
 {
@@ -639,7 +639,7 @@ void Administrator::DeleteBook()			//删除书籍
 }
 
 
-//——————————对象操作函数——————————
+//——————————对象功能函数——————————
 
 void ReaderFunction(int n)
 {
@@ -770,7 +770,7 @@ void AdministratorFunction()
 }
 
 
-//——————————初始界面函数——————————
+//——————————初始函数——————————
 
 int RegisterOrLogin()			//选择注册或登陆
 {
