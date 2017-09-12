@@ -33,22 +33,22 @@
 * 2个基类：*class Book* 和*class User*。
 * 2个由基类派生出的派生类：*class Reader* 和*class Administrator*。
 
-*class Book* 包含了2个功能函数：
+1. *class Book* 包含了2个功能函数：
 * `void FindBook()`：查找书籍
 * `void PrintBook(streampos pos)`：输出书籍信息
 
-*class User* 包含了4个功能函数：
+2. *class User* 包含了4个功能函数：
 * `void Register(const string sign)`：注册账号
 * `int Login(const string sign)`：登陆账号
 * `void ChangePassword(const string sign)`：修改密码
 * `void LogOff(const string sign)`：注销账号
 
-*class Reader :public Book, public User* 包含了3个功能函数：
+3. *class Reader :public Book, public User* 包含了3个功能函数：
 * `void ShowProfile()`：显示账户借阅书籍信息
 * `void BorrowBook()`：借书
 * `void ReturnBook()`：还书
 
-*class Administrator :public Book, public User* 包含了2个功能函数：
+4. *class Administrator :public Book, public User* 包含了2个功能函数：
 * `void AddBook()`：新增书籍
 * `void DeleteBook()`：删除书籍
 
