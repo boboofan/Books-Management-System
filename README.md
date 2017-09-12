@@ -62,7 +62,7 @@
 * `void AdministratorFunction()`：显示管理员界面
 
 ### 4.接口函数：
-####将需要多次调用的功能函数提取出来，使用包括统一接口，函数重载等方式来优化代码结构，以减少代码的冗余：
+将需要多次调用的功能函数提取出来，使用包括统一接口，函数重载等方式来优化代码结构，以减少代码的冗余：
 * `int IsLegal(string s)`；
 * `streampos CheckAccount(string s, const string sign)`；
 * `int CheckPassword(string s, const string sign, streampos pos)`；
