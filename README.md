@@ -86,4 +86,4 @@
 * 不可用：***serial number**@**ISBN**&**name**+**author**-**remainingnumber**
 
 3. 用户信息文件（#**account**.bin）：
-* **number of borrowing**#**serial number of book**
+* **number of borrowed books**#**serial number of books**
