@@ -22,7 +22,7 @@
 ---
 
 ## 四．系统功能框架图：
-![流程图](https://photos.app.goo.gl/gzCo5XkOO2sz3MZu1)
+![流程图](http://wx3.sinaimg.cn/mw690/006zDp44gy1flqzj401eij30wn15e40y.jpg)
 
 ---
 
